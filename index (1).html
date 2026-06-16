@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Generate good, better, and best Instacart Sponsored Product spend recommendations from L7 campaign performance and missed auction percentages." />
+  <title>IC Missed Auction % Advisor | Retail Media Tools</title>
+  <style>
+    :root {
+      --bg: #080b0a;
+      --panel: #101513;
+      --panel-2: #151c19;
+      --line: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.94);
+      --muted: rgba(255,255,255,.62);
+      --green: #19c37d;
+      --green-2: #0ea867;
+      --green-soft: rgba(25,195,125,.12);
+      --yellow: #f2c94c;
+      --red: #ff6b6b;
+      --blue: #73a7ff;
+      --radius: 18px;
+      --shadow: 0 18px 50px rgba(0,0,0,.28);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(25,195,125,.10), transparent 34%),
+        radial-gradient(circle at 92% 18%, rgba(115,167,255,.08), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button, input { font: inherit; }
+    a { color: inherit; }
+
+    .shell { width: min(1440px, calc(100% - 32px)); margin: 0 auto; padding-bottom: 56px; }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 24px 0 18px;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(25,195,125,.45);
+      border-radius: 12px;
+      background: var(--green-soft);
+      color: var(--green);
+      box-shadow: inset 0 0 24px rgba(25,195,125,.08);
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 14px;
+      transition: .2s ease;
+    }
+    .back-link:hover { color: var(--text); border-color: rgba(25,195,125,.45); }
+
+    .hero {
+      padding: 34px 0 26px;
+      max-width: 940px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.15rem, 5vw, 4.25rem);
+      line-height: 1.02;
+      letter-spacing: -.055em;
+      max-width: 850px;
+    }
+
+    .hero p {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.4vw, 1.15rem);
+      max-width: 820px;
+    }
+
+    .grid { display: grid; gap: 18px; }
+    .setup-grid { grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.012)), var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 22px 0;
+    }
+
+    .step-label {
+      display: inline-grid;
+      place-items: center;
+      min-width: 30px;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-weight: 800;
+      font-size: .82rem;
+      margin-bottom: 10px;
+    }
+
+    .card h2 { margin: 0; font-size: 1.17rem; letter-spacing: -.02em; }
+    .card-sub { margin: 6px 0 0; color: var(--muted); font-size: .9rem; }
+    .card-body { padding: 20px 22px 22px; }
+
+    label.field-label {
+      display: block;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      margin-bottom: 7px;
+      text-transform: uppercase;
+    }
+
+    input[type="text"], input[type="date"], input[type="number"] {
+      width: 100%;
+      color: var(--text);
+      background: #0c100f;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 11px 12px;
+      outline: none;
+      transition: .18s ease;
+    }
+
+    input:focus { border-color: rgba(25,195,125,.72); box-shadow: 0 0 0 3px rgba(25,195,125,.10); }
+    input::placeholder { color: rgba(255,255,255,.28); }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+
+    .upload-zone {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 196px;
+      text-align: center;
+      border: 1.5px dashed rgba(25,195,125,.45);
+      border-radius: 15px;
+      padding: 22px;
+      background: rgba(25,195,125,.045);
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .upload-zone:hover, .upload-zone.dragging {
+      border-color: var(--green);
+      background: rgba(25,195,125,.085);
+      transform: translateY(-1px);
+    }
+
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon { font-size: 2rem; margin-bottom: 7px; }
+    .upload-title { font-weight: 800; }
+    .upload-copy { color: var(--muted); font-size: .88rem; margin-top: 5px; }
+
+    .file-pill {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 11px;
+      border: 1px solid rgba(25,195,125,.30);
+      background: var(--green-soft);
+      color: #c8ffe8;
+      font-size: .86rem;
+    }
+
+    .status-message {
+      display: none;
+      margin-top: 12px;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: .87rem;
+    }
+    .status-message.error { display: block; background: rgba(255,107,107,.10); border: 1px solid rgba(255,107,107,.32); color: #ffc8c8; }
+    .status-message.success { display: block; background: rgba(25,195,125,.10); border: 1px solid rgba(25,195,125,.30); color: #c8ffe8; }
+    .status-message.warning { display: block; background: rgba(242,201,76,.10); border: 1px solid rgba(242,201,76,.30); color: #ffe9a2; }
+
+    .info-list { display: grid; gap: 13px; }
+    .info-item { display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: start; }
+    .info-number {
+      width: 28px; height: 28px; display: grid; place-items: center;
+      border-radius: 9px; background: var(--panel-2); color: var(--green); font-weight: 800; font-size: .8rem;
+      border: 1px solid var(--line);
+    }
+    .info-item strong { display: block; font-size: .9rem; }
+    .info-item span { display: block; color: var(--muted); font-size: .83rem; margin-top: 2px; }
+
+    .section-spacer { margin-top: 18px; }
+    .hidden { display: none !important; }
+
+    .table-wrap { overflow-x: auto; border-top: 1px solid var(--line); margin-top: 18px; }
+    table { width: 100%; border-collapse: collapse; min-width: 1060px; }
+    .results-table table { min-width: 1780px; }
+    th, td { padding: 12px 12px; border-bottom: 1px solid rgba(255,255,255,.065); text-align: right; vertical-align: middle; }
+    th { color: var(--muted); font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; background: rgba(255,255,255,.018); }
+    td { font-size: .86rem; }
+    th:first-child, td:first-child { text-align: left; padding-left: 22px; }
+    th:last-child, td:last-child { padding-right: 22px; }
+    tr:last-child td { border-bottom: none; }
+    .campaign-name { max-width: 360px; font-weight: 700; line-height: 1.3; }
+    .campaign-note { color: var(--muted); font-size: .76rem; margin-top: 3px; font-weight: 500; }
+    .pct-input { width: 104px !important; text-align: right; }
+    .pct-wrap { display: inline-flex; align-items: center; gap: 6px; }
+    .pct-symbol { color: var(--muted); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: .73rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .badge.active { color: #caffeb; background: rgba(25,195,125,.12); border: 1px solid rgba(25,195,125,.28); }
+    .badge.zero { color: #ffe9a2; background: rgba(242,201,76,.10); border: 1px solid rgba(242,201,76,.28); }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,.018);
+    }
+    summary { cursor: pointer; list-style: none; padding: 14px 16px; font-weight: 800; font-size: .9rem; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; float: right; color: var(--green); font-size: 1.1rem; }
+    details[open] summary::after { content: "−"; }
+    .details-body { border-top: 1px solid var(--line); padding: 15px 16px 16px; }
+
+    .assumption-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .assumption-box { border: 1px solid var(--line); border-radius: 12px; padding: 13px; background: rgba(255,255,255,.015); }
+    .assumption-box h3 { margin: 0 0 10px; font-size: .9rem; }
+    .mini-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mini-row label { color: var(--muted); font-size: .72rem; }
+    .mini-row input { margin-top: 5px; padding: 8px 9px; }
+
+    .action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 18px 22px 22px; }
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    .btn-primary { background: var(--green); color: #04130d; }
+    .btn-primary:hover { background: #28d990; transform: translateY(-1px); }
+    .btn-secondary { color: var(--text); border: 1px solid var(--line); background: rgba(255,255,255,.035); }
+    .btn-secondary:hover { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.06); }
+    .btn-danger { color: #ffbcbc; border: 1px solid rgba(255,107,107,.22); background: rgba(255,107,107,.06); }
+    .btn:disabled { opacity: .42; cursor: not-allowed; transform: none; }
+
+    .results-intro { padding: 22px; display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+    .results-intro h2 { margin: 0; font-size: 1.35rem; }
+    .results-intro p { color: var(--muted); margin: 6px 0 0; font-size: .9rem; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 0 22px 22px; }
+    .scenario-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      background: var(--panel-2);
+      position: relative;
+      overflow: hidden;
+    }
+    .scenario-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--green); }
+    .scenario-card.better::before { background: var(--blue); }
+    .scenario-card.best::before { background: var(--yellow); }
+    .scenario-name { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .scenario-name h3 { margin: 0; font-size: 1rem; }
+    .scenario-name span { color: var(--muted); font-size: .75rem; }
+    .big-number { font-size: clamp(1.55rem, 2.6vw, 2.3rem); font-weight: 850; letter-spacing: -.04em; margin-top: 12px; }
+    .big-caption { color: var(--muted); font-size: .78rem; margin-top: -2px; }
+    .metric-list { display: grid; gap: 9px; margin-top: 15px; }
+    .metric-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 9px; border-top: 1px solid rgba(255,255,255,.065); font-size: .84rem; }
+    .metric-line span:first-child { color: var(--muted); }
+    .metric-line strong { text-align: right; }
+
+    .formula-box { margin: 0 22px 22px; padding: 14px 16px; border-radius: 13px; border: 1px solid rgba(115,167,255,.23); background: rgba(115,167,255,.055); color: #d6e4ff; font-size: .83rem; }
+
+    .results-table .scenario-group { font-size: .67rem; }
+    .positive { color: #9cf3c9; font-weight: 750; }
+    .muted { color: var(--muted); }
+
+    .footer-note { text-align: center; color: rgba(255,255,255,.38); font-size: .76rem; padding: 28px 0 0; }
+
+    @media (max-width: 920px) {
+      .setup-grid, .summary-grid, .assumption-grid { grid-template-columns: 1fr; }
+      .field-row { grid-template-columns: 1fr; }
+      .results-intro { flex-direction: column; }
+    }
+
+    @media print {
+      body { background: #fff; color: #111; }
+      header, .hero, #setupSection, #campaignInputSection, .action-row, .footer-note, .back-link { display: none !important; }
+      .shell { width: 100%; padding: 0; }
+      .card, .scenario-card { color: #111; background: #fff; box-shadow: none; border-color: #ccc; }
+      .muted, .card-sub, .results-intro p, .metric-line span:first-child, .big-caption, th { color: #555 !important; }
+      .table-wrap { overflow: visible; }
+      table { min-width: 100%; font-size: 9px; }
+      th, td { padding: 6px; border-color: #ddd; }
+      .positive { color: #08783f; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <a class="brand-mark" href="./index.html" aria-label="Retail Media Tools home">
+        <span class="brand-icon">%</span>
+        <span>PLTFRM Retail Media Tools</span>
+      </a>
+      <a class="back-link" href="https://jesskodiak.github.io/Retail-Media-Tools/">← Back to Retail Media Tools</a>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="eyebrow">Instacart Sponsored Products</div>
+        <h1>IC Missed Auction % Advisor</h1>
+        <p>Upload a last-7-day campaign report, enter the missed auction percentage shown in Instacart for each active campaign, and generate Good, Better, and Best spend and attributed-sales lift estimates through month-end.</p>
+      </section>
+
+      <section id="setupSection" class="grid setup-grid">
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <span class="step-label">Step 1</span>
+              <h2>Set the brand and timing</h2>
+              <p class="card-sub">The plan begins tomorrow by default and runs through the final day of that month.</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label class="field-label" for="brandName">Brand name</label>
+              <input id="brandName" type="text" placeholder="Example: Flipz" autocomplete="off" />
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="planStart">Recommendation start date</label>
+                <input id="planStart" type="date" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="planEnd">Month-end date</label>
+                <input id="planEnd" type="date" />
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <span class="step-label">Step 2</span>
+              <h2>Upload the L7 campaign report</h2>
+              <p class="card-sub">Use the Instacart all-campaigns aggregated last-touch CSV for exactly seven days.</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <label class="upload-zone" id="uploadZone" for="fileInput">
+              <input id="fileInput" type="file" accept=".csv,text/csv" />
+              <span>
+                <div class="upload-icon">⇧</div>
+                <div class="upload-title">Drop the CSV here or click to browse</div>
+                <div class="upload-copy">Required fields: status, campaign, spend, attributed_sales, and target_daily_budget. ROAS will be calculated if needed.</div>
+              </span>
+            </label>
+            <div class="file-pill" id="filePill"><span id="fileName"></span><span id="fileCampaignCount"></span></div>
+            <div class="status-message" id="uploadStatus"></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="card section-spacer" aria-label="How it works">
+        <div class="card-head">
+          <div>
+            <span class="step-label">How it works</span>
+            <h2>What the advisor estimates</h2>
+          </div>
+        </div>
+        <div class="card-body info-list">
+          <div class="info-item"><span class="info-number">1</span><div><strong>Uses actual L7 performance</strong><span>Average daily spend and ROAS come from the uploaded report, limited to active campaigns.</span></div></div>
+          <div class="info-item"><span class="info-number">2</span><div><strong>Sizes the missed-auction opportunity</strong><span>The model estimates how much incremental spend would be needed to recover a selected share of auctions currently missed.</span></div></div>
+          <div class="info-item"><span class="info-number">3</span><div><strong>Projects through month-end</strong><span>Incremental daily spend is multiplied by remaining days, then by the campaign’s L7 ROAS to estimate attributed sales lift.</span></div></div>
+        </div>
+      </section>
+
+      <section id="campaignInputSection" class="card section-spacer hidden">
+        <div class="card-head">
+          <div>
+            <span class="step-label">Step 3</span>
+            <h2>Enter each active campaign’s L7 missed auction %</h2>
+            <p class="card-sub">Copy the percentage shown in Instacart. Enter 0 for campaigns with no missed auctions. The scenario recommendations adjust automatically to each campaign’s percentage.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table aria-label="Campaign inputs">
+            <thead>
+              <tr>
+                <th>Campaign</th>
+                <th>Status</th>
+                <th>L7 Spend</th>
+                <th>L7 Sales</th>
+                <th>L7 ROAS</th>
+                <th>L7 Avg Daily Spend</th>
+                <th>Current Daily Budget</th>
+                <th>Missed Auction %</th>
+              </tr>
+            </thead>
+            <tbody id="campaignInputBody"></tbody>
+          </table>
+        </div>
+
+        <div class="card-body" style="padding-bottom:0;">
+          <details>
+            <summary>Advanced assumptions</summary>
+            <div class="details-body">
+              <p class="card-sub" style="margin-top:0; margin-bottom:14px;">“Auction recovery” is applied dynamically to each campaign’s missed-auction opportunity, not as a fixed spend increase. For example, at 40% missed auctions, Good funds 25% of that missed opportunity, Better funds 50%, and Best funds 75%. Because the recommendation adds budget without increasing CPC bids, all three scenarios use the campaign’s full L7 ROAS to estimate attributed sales lift.</p>
+              <div class="assumption-grid">
+                <div class="assumption-box">
+                  <h3>Good</h3>
+                  <div class="mini-row">
+                    <label>Auction recovery %<input id="goodCapture" type="number" min="0" max="100" step="1" value="25" /></label>
+                  </div>
+                </div>
+                <div class="assumption-box">
+                  <h3>Better</h3>
+                  <div class="mini-row">
+                    <label>Auction recovery %<input id="betterCapture" type="number" min="0" max="100" step="1" value="50" /></label>
+                  </div>
+                </div>
+                <div class="assumption-box">
+                  <h3>Best</h3>
+                  <div class="mini-row">
+                    <label>Auction recovery %<input id="bestCapture" type="number" min="0" max="100" step="1" value="75" /></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+          <div class="status-message" id="calcStatus"></div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-primary" id="calculateBtn">Generate recommendations</button>
+          <button class="btn btn-secondary" id="fillZeroBtn">Fill blank percentages with 0%</button>
+          <button class="btn btn-danger" id="resetBtn">Reset</button>
+        </div>
+      </section>
+
+      <section id="resultsSection" class="card section-spacer hidden">
+        <div class="results-intro">
+          <div>
+            <h2 id="resultsTitle">Recommendations</h2>
+            <p id="resultsSubtitle"></p>
+          </div>
+          <div class="action-row" style="padding:0;">
+            <button class="btn btn-secondary" id="exportBtn">Export results CSV</button>
+            <button class="btn btn-secondary" id="printBtn">Print / Save PDF</button>
+          </div>
+        </div>
+
+        <div class="summary-grid" id="summaryGrid"></div>
+
+        <div class="formula-box">
+          <strong>Dynamic model:</strong> Full recoverable daily spend opportunity = L7 average daily spend × missed auction % ÷ (1 − missed auction %). Good, Better, and Best then fund the selected share of each campaign’s own remaining opportunity. Target missed auction % = current missed auction % × (1 − recovery share). Estimated sales lift = incremental spend × the campaign’s L7 ROAS. The model assumes ROAS remains consistent because the recommendation increases available budget without changing CPC bids. These are directional planning estimates, not guaranteed delivery or sales.
+        </div>
+
+        <div class="table-wrap results-table">
+          <table aria-label="Campaign recommendation results">
+            <thead>
+              <tr>
+                <th rowspan="2">Campaign</th>
+                <th rowspan="2">Missed %</th>
+                <th rowspan="2">L7 ROAS</th>
+                <th colspan="5" class="scenario-group">Good</th>
+                <th colspan="5" class="scenario-group">Better</th>
+                <th colspan="5" class="scenario-group">Best</th>
+              </tr>
+              <tr>
+                <th>Target Missed %</th><th>Daily Increase</th><th>Suggested Budget</th><th>Month Spend Lift</th><th>Sales Lift</th>
+                <th>Target Missed %</th><th>Daily Increase</th><th>Suggested Budget</th><th>Month Spend Lift</th><th>Sales Lift</th>
+                <th>Target Missed %</th><th>Daily Increase</th><th>Suggested Budget</th><th>Month Spend Lift</th><th>Sales Lift</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <div class="footer-note">IC Missed Auction % Advisor · Directional planning tool for Instacart Sponsored Products · Uploaded files stay in your browser</div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const state = {
+        fileName: "",
+        campaigns: [],
+        results: [],
+        summary: null,
+        daysRemaining: 0
+      };
+
+      const el = id => document.getElementById(id);
+      const fileInput = el("fileInput");
+      const uploadZone = el("uploadZone");
+      const campaignInputSection = el("campaignInputSection");
+      const resultsSection = el("resultsSection");
+
+      function localDateInputValue(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+
+      function parseLocalDate(value) {
+        const [y, m, d] = value.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      function setDefaultDates() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const end = new Date(tomorrow.getFullYear(), tomorrow.getMonth() + 1, 0);
+        el("planStart").value = localDateInputValue(tomorrow);
+        el("planEnd").value = localDateInputValue(end);
+      }
+
+      function syncMonthEnd() {
+        if (!el("planStart").value) return;
+        const start = parseLocalDate(el("planStart").value);
+        const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+        el("planEnd").value = localDateInputValue(end);
+      }
+
+      function showStatus(node, message, type) {
+        node.textContent = message;
+        node.className = `status-message ${type}`;
+      }
+
+      function clearStatus(node) {
+        node.textContent = "";
+        node.className = "status-message";
+      }
+
+      function normalizeHeader(value) {
+        return String(value || "")
+          .replace(/^\uFEFF/, "")
+          .trim()
+          .toLowerCase()
+          .replace(/[\s-]+/g, "_")
+          .replace(/[^a-z0-9_]/g, "");
+      }
+
+      function parseCSV(text) {
+        const rows = [];
+        let row = [];
+        let field = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          const next = text[i + 1];
+
+          if (inQuotes) {
+            if (char === '"' && next === '"') {
+              field += '"';
+              i++;
+            } else if (char === '"') {
+              inQuotes = false;
+            } else {
+              field += char;
+            }
+          } else if (char === '"') {
+            inQuotes = true;
+          } else if (char === ',') {
+            row.push(field);
+            field = "";
+          } else if (char === '\n') {
+            row.push(field.replace(/\r$/, ""));
+            rows.push(row);
+            row = [];
+            field = "";
+          } else {
+            field += char;
+          }
+        }
+
+        if (field.length || row.length) {
+          row.push(field.replace(/\r$/, ""));
+          rows.push(row);
+        }
+
+        return rows.filter(r => r.some(cell => String(cell).trim() !== ""));
+      }
+
+      function toNumber(value) {
+        if (value === null || value === undefined || value === "") return 0;
+        const cleaned = String(value).replace(/[$,%\s]/g, "").replace(/,/g, "");
+        const parsed = Number(cleaned);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function mapRows(rows) {
+        if (rows.length < 2) throw new Error("The CSV does not contain any campaign rows.");
+        const headers = rows[0].map(normalizeHeader);
+        const index = name => headers.indexOf(name);
+        const findIndex = names => names.map(index).find(i => i >= 0) ?? -1;
+
+        const indexes = {
+          status: findIndex(["status", "campaign_status"]),
+          campaign: findIndex(["campaign", "campaign_name", "name"]),
+          spend: findIndex(["spend", "ad_spend"]),
+          sales: findIndex(["attributed_sales", "sales", "ad_sales"]),
+          roas: findIndex(["roas", "return_on_ad_spend"]),
+          dailyBudget: findIndex(["target_daily_budget", "daily_budget", "budget"])
+        };
+
+        const requiredMissing = ["status", "campaign", "spend", "sales"]
+          .filter(key => indexes[key] < 0);
+        if (requiredMissing.length) {
+          throw new Error(`Missing required column(s): ${requiredMissing.join(", ")}. Please upload the Instacart all-campaigns report.`);
+        }
+
+        return rows.slice(1).map((row, rowIndex) => {
+          const spend = toNumber(row[indexes.spend]);
+          const sales = toNumber(row[indexes.sales]);
+          const reportedRoas = indexes.roas >= 0 ? toNumber(row[indexes.roas]) : 0;
+          const roas = reportedRoas > 0 ? reportedRoas : (spend > 0 ? sales / spend : 0);
+          return {
+            id: `campaign-${rowIndex}`,
+            status: String(row[indexes.status] || "").trim().toLowerCase(),
+            campaign: String(row[indexes.campaign] || "Unnamed campaign").trim(),
+            spend,
+            sales,
+            roas,
+            currentDailyBudget: indexes.dailyBudget >= 0 ? toNumber(row[indexes.dailyBudget]) : 0,
+            avgDailySpend: spend / 7,
+            missedPct: ""
+          };
+        }).filter(c => c.status === "active");
+      }
+
+      function currency(value, decimals = 0) {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        }).format(Number.isFinite(value) ? value : 0);
+      }
+
+      function number(value, decimals = 2) {
+        return new Intl.NumberFormat("en-US", {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        }).format(Number.isFinite(value) ? value : 0);
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function renderCampaignInputs() {
+        const body = el("campaignInputBody");
+        body.innerHTML = state.campaigns.map((c, idx) => `
+          <tr>
+            <td>
+              <div class="campaign-name">${escapeHtml(c.campaign)}</div>
+              ${c.spend <= 0 ? '<div class="campaign-note">No L7 spend; recommendation will remain $0.</div>' : ''}
+            </td>
+            <td><span class="badge ${c.spend > 0 ? "active" : "zero"}">${c.spend > 0 ? "Active" : "No spend"}</span></td>
+            <td>${currency(c.spend, 2)}</td>
+            <td>${currency(c.sales, 2)}</td>
+            <td>${number(c.roas, 2)}x</td>
+            <td>${currency(c.avgDailySpend, 2)}</td>
+            <td>${c.currentDailyBudget > 0 ? currency(c.currentDailyBudget, 2) : '<span class="muted">Not provided</span>'}</td>
+            <td>
+              <span class="pct-wrap">
+                <input class="pct-input" aria-label="Missed auction percentage for ${escapeHtml(c.campaign)}" data-index="${idx}" type="number" min="0" max="99.9" step="0.1" placeholder="0.0" />
+                <span class="pct-symbol">%</span>
+              </span>
+            </td>
+          </tr>
+        `).join("");
+
+        body.querySelectorAll(".pct-input").forEach(input => {
+          input.addEventListener("input", event => {
+            const idx = Number(event.target.dataset.index);
+            state.campaigns[idx].missedPct = event.target.value;
+            clearStatus(el("calcStatus"));
+          });
+        });
+
+        campaignInputSection.classList.remove("hidden");
+        resultsSection.classList.add("hidden");
+      }
+
+      function handleFile(file) {
+        clearStatus(el("uploadStatus"));
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith(".csv")) {
+          showStatus(el("uploadStatus"), "Please upload a CSV file downloaded from Instacart.", "error");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = event => {
+          try {
+            const rows = parseCSV(event.target.result);
+            const campaigns = mapRows(rows);
+            if (!campaigns.length) throw new Error("No active campaigns were found in this report.");
+
+            state.fileName = file.name;
+            state.campaigns = campaigns;
+            state.results = [];
+            state.summary = null;
+
+            el("fileName").textContent = file.name;
+            el("fileCampaignCount").textContent = `${campaigns.length} active campaign${campaigns.length === 1 ? "" : "s"}`;
+            el("filePill").style.display = "flex";
+            showStatus(el("uploadStatus"), `Report loaded successfully. Enter missed auction percentages for ${campaigns.length} active campaign${campaigns.length === 1 ? "" : "s"}.`, "success");
+            renderCampaignInputs();
+            campaignInputSection.scrollIntoView({ behavior: "smooth", block: "start" });
+          } catch (error) {
+            state.campaigns = [];
+            campaignInputSection.classList.add("hidden");
+            resultsSection.classList.add("hidden");
+            showStatus(el("uploadStatus"), error.message || "The report could not be read.", "error");
+          }
+        };
+        reader.onerror = () => showStatus(el("uploadStatus"), "The file could not be read. Please try the download again.", "error");
+        reader.readAsText(file);
+      }
+
+      function getScenarios() {
+        const scenario = (name, captureId) => ({
+          name,
+          captureRate: toNumber(el(captureId).value) / 100,
+          retentionRate: 1
+        });
+        return [
+          scenario("Good", "goodCapture"),
+          scenario("Better", "betterCapture"),
+          scenario("Best", "bestCapture")
+        ];
+      }
+
+      function validateInputs() {
+        const brand = el("brandName").value.trim();
+        if (!brand) return "Enter the brand name.";
+        if (!state.campaigns.length) return "Upload the L7 campaign report.";
+        if (!el("planStart").value || !el("planEnd").value) return "Select the recommendation start and end dates.";
+
+        const start = parseLocalDate(el("planStart").value);
+        const end = parseLocalDate(el("planEnd").value);
+        if (end < start) return "The month-end date must be on or after the start date.";
+
+        const missing = state.campaigns.filter(c => c.missedPct === "" || c.missedPct === null);
+        if (missing.length) return `Enter a missed auction percentage for every active campaign, or use “Fill blank percentages with 0%.”`;
+
+        const invalid = state.campaigns.filter(c => {
+          const value = Number(c.missedPct);
+          return !Number.isFinite(value) || value < 0 || value >= 100;
+        });
+        if (invalid.length) return "Missed auction percentages must be from 0% through 99.9%.";
+
+        const scenarios = getScenarios();
+        const invalidScenario = scenarios.some(s => s.captureRate < 0 || s.captureRate > 1);
+        if (invalidScenario) return "Scenario auction recovery must be 0%–100%.";
+
+        return "";
+      }
+
+      function daysInclusive(start, end) {
+        const oneDay = 24 * 60 * 60 * 1000;
+        const utcStart = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+        const utcEnd = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+        return Math.floor((utcEnd - utcStart) / oneDay) + 1;
+      }
+
+      function calculate() {
+        clearStatus(el("calcStatus"));
+        const error = validateInputs();
+        if (error) {
+          showStatus(el("calcStatus"), error, "error");
+          return;
+        }
+
+        const start = parseLocalDate(el("planStart").value);
+        const end = parseLocalDate(el("planEnd").value);
+        const days = daysInclusive(start, end);
+        const scenarios = getScenarios();
+        state.daysRemaining = days;
+
+        const results = state.campaigns.map(c => {
+          const missedRate = Number(c.missedPct) / 100;
+          const fullDailyOpportunity = c.avgDailySpend > 0 && missedRate > 0
+            ? c.avgDailySpend * missedRate / (1 - missedRate)
+            : 0;
+
+          const scenarioResults = {};
+          scenarios.forEach(s => {
+            const dailyIncrease = fullDailyOpportunity * s.captureRate;
+            const remainderSpendLift = dailyIncrease * days;
+            const adjustedRoas = c.roas * s.retentionRate;
+            const salesLift = remainderSpendLift * adjustedRoas;
+            const suggestedDailyBudget = (c.currentDailyBudget > 0 ? c.currentDailyBudget : c.avgDailySpend) + dailyIncrease;
+            const targetMissedRate = missedRate * (1 - s.captureRate);
+            scenarioResults[s.name.toLowerCase()] = {
+              captureRate: s.captureRate,
+              retentionRate: s.retentionRate,
+              targetMissedRate,
+              dailyIncrease,
+              remainderSpendLift,
+              adjustedRoas,
+              salesLift,
+              suggestedDailyBudget
+            };
+          });
+
+          return { ...c, missedRate, fullDailyOpportunity, scenarios: scenarioResults };
+        });
+
+        const summary = {};
+        scenarios.forEach(s => {
+          const key = s.name.toLowerCase();
+          summary[key] = results.reduce((acc, row) => {
+            const r = row.scenarios[key];
+            acc.dailyIncrease += r.dailyIncrease;
+            acc.remainderSpendLift += r.remainderSpendLift;
+            acc.salesLift += r.salesLift;
+            acc.currentDailyBudget += row.currentDailyBudget;
+            acc.suggestedDailyBudget += r.suggestedDailyBudget;
+            return acc;
+          }, { dailyIncrease: 0, remainderSpendLift: 0, salesLift: 0, currentDailyBudget: 0, suggestedDailyBudget: 0 });
+          summary[key].captureRate = s.captureRate;
+          summary[key].retentionRate = s.retentionRate;
+        });
+
+        state.results = results;
+        state.summary = summary;
+        renderResults();
+      }
+
+      function renderResults() {
+        const brand = el("brandName").value.trim();
+        const start = parseLocalDate(el("planStart").value);
+        const end = parseLocalDate(el("planEnd").value);
+        const dateFormatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+        el("resultsTitle").textContent = `${brand} Good / Better / Best Recommendations`;
+        el("resultsSubtitle").textContent = `${state.results.length} active campaign${state.results.length === 1 ? "" : "s"} · ${state.daysRemaining} day${state.daysRemaining === 1 ? "" : "s"} from ${dateFormatter.format(start)} through ${dateFormatter.format(end)}`;
+
+        const cards = [
+          { key: "good", label: "Good", className: "good" },
+          { key: "better", label: "Better", className: "better" },
+          { key: "best", label: "Best", className: "best" }
+        ];
+
+        el("summaryGrid").innerHTML = cards.map(card => {
+          const s = state.summary[card.key];
+          return `
+            <article class="scenario-card ${card.className}">
+              <div class="scenario-name">
+                <h3>${card.label}</h3>
+                <span>${number(s.captureRate * 100, 0)}% auction recovery · Uses full L7 ROAS</span>
+              </div>
+              <div class="big-number">+${currency(s.dailyIncrease, 0)}/day</div>
+              <div class="big-caption">Total incremental daily spend needed</div>
+              <div class="metric-list">
+                <div class="metric-line"><span>Current total daily budgets</span><strong>${currency(s.currentDailyBudget, 0)}/day</strong></div>
+                <div class="metric-line"><span>Suggested total daily budgets</span><strong>${currency(s.suggestedDailyBudget, 0)}/day</strong></div>
+                <div class="metric-line"><span>Remainder-of-month spend lift</span><strong class="positive">+${currency(s.remainderSpendLift, 0)}</strong></div>
+                <div class="metric-line"><span>Estimated attributed sales lift</span><strong class="positive">+${currency(s.salesLift, 0)}</strong></div>
+              </div>
+            </article>
+          `;
+        }).join("");
+
+        el("resultsBody").innerHTML = state.results.map(row => {
+          const g = row.scenarios.good;
+          const b = row.scenarios.better;
+          const best = row.scenarios.best;
+          return `
+            <tr>
+              <td><div class="campaign-name">${escapeHtml(row.campaign)}</div><div class="campaign-note">Current budget: ${row.currentDailyBudget > 0 ? currency(row.currentDailyBudget, 0) + "/day" : "not provided"}</div></td>
+              <td>${number(row.missedRate * 100, 1)}%</td>
+              <td>${number(row.roas, 2)}x</td>
+              <td>${number(g.targetMissedRate * 100, 1)}%</td><td class="positive">+${currency(g.dailyIncrease, 0)}</td><td>${currency(g.suggestedDailyBudget, 0)}/day</td><td>+${currency(g.remainderSpendLift, 0)}</td><td>+${currency(g.salesLift, 0)}</td>
+              <td>${number(b.targetMissedRate * 100, 1)}%</td><td class="positive">+${currency(b.dailyIncrease, 0)}</td><td>${currency(b.suggestedDailyBudget, 0)}/day</td><td>+${currency(b.remainderSpendLift, 0)}</td><td>+${currency(b.salesLift, 0)}</td>
+              <td>${number(best.targetMissedRate * 100, 1)}%</td><td class="positive">+${currency(best.dailyIncrease, 0)}</td><td>${currency(best.suggestedDailyBudget, 0)}/day</td><td>+${currency(best.remainderSpendLift, 0)}</td><td>+${currency(best.salesLift, 0)}</td>
+            </tr>
+          `;
+        }).join("");
+
+        resultsSection.classList.remove("hidden");
+        resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function csvCell(value) {
+        const text = String(value ?? "");
+        return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+      }
+
+      function exportResults() {
+        if (!state.results.length || !state.summary) return;
+        const brand = el("brandName").value.trim();
+        const rows = [[
+          "Brand", "Campaign", "L7 Spend", "L7 Attributed Sales", "L7 ROAS", "Current Daily Budget", "Missed Auction %",
+          "Good Target Missed Auction %", "Good Daily Spend Increase", "Good Suggested Daily Budget", "Good Remainder Spend Lift", "Good Estimated Sales Lift",
+          "Better Target Missed Auction %", "Better Daily Spend Increase", "Better Suggested Daily Budget", "Better Remainder Spend Lift", "Better Estimated Sales Lift",
+          "Best Target Missed Auction %", "Best Daily Spend Increase", "Best Suggested Daily Budget", "Best Remainder Spend Lift", "Best Estimated Sales Lift",
+          "Recommendation Start", "Recommendation End", "Days Remaining"
+        ]];
+
+        state.results.forEach(row => {
+          const g = row.scenarios.good;
+          const b = row.scenarios.better;
+          const best = row.scenarios.best;
+          rows.push([
+            brand, row.campaign, row.spend.toFixed(2), row.sales.toFixed(2), row.roas.toFixed(4), row.currentDailyBudget.toFixed(2), (row.missedRate * 100).toFixed(1),
+            (g.targetMissedRate * 100).toFixed(1), g.dailyIncrease.toFixed(2), g.suggestedDailyBudget.toFixed(2), g.remainderSpendLift.toFixed(2), g.salesLift.toFixed(2),
+            (b.targetMissedRate * 100).toFixed(1), b.dailyIncrease.toFixed(2), b.suggestedDailyBudget.toFixed(2), b.remainderSpendLift.toFixed(2), b.salesLift.toFixed(2),
+            (best.targetMissedRate * 100).toFixed(1), best.dailyIncrease.toFixed(2), best.suggestedDailyBudget.toFixed(2), best.remainderSpendLift.toFixed(2), best.salesLift.toFixed(2),
+            el("planStart").value, el("planEnd").value, state.daysRemaining
+          ]);
+        });
+
+        ["good", "better", "best"].forEach(key => {
+          const s = state.summary[key];
+          const label = key.charAt(0).toUpperCase() + key.slice(1);
+          rows.push([
+            brand, `${label} TOTAL`, "", "", "", s.currentDailyBudget.toFixed(2), "",
+            "", key === "good" ? s.dailyIncrease.toFixed(2) : "", key === "good" ? s.suggestedDailyBudget.toFixed(2) : "", key === "good" ? s.remainderSpendLift.toFixed(2) : "", key === "good" ? s.salesLift.toFixed(2) : "",
+            "", key === "better" ? s.dailyIncrease.toFixed(2) : "", key === "better" ? s.suggestedDailyBudget.toFixed(2) : "", key === "better" ? s.remainderSpendLift.toFixed(2) : "", key === "better" ? s.salesLift.toFixed(2) : "",
+            "", key === "best" ? s.dailyIncrease.toFixed(2) : "", key === "best" ? s.suggestedDailyBudget.toFixed(2) : "", key === "best" ? s.remainderSpendLift.toFixed(2) : "", key === "best" ? s.salesLift.toFixed(2) : "",
+            el("planStart").value, el("planEnd").value, state.daysRemaining
+          ]);
+        });
+
+        const csv = rows.map(row => row.map(csvCell).join(",")).join("\n");
+        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${brand.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "brand"}-IC-Missed-Auction-Recommendations.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      function reset() {
+        state.fileName = "";
+        state.campaigns = [];
+        state.results = [];
+        state.summary = null;
+        state.daysRemaining = 0;
+        fileInput.value = "";
+        el("brandName").value = "";
+        el("filePill").style.display = "none";
+        clearStatus(el("uploadStatus"));
+        clearStatus(el("calcStatus"));
+        campaignInputSection.classList.add("hidden");
+        resultsSection.classList.add("hidden");
+        setDefaultDates();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      fileInput.addEventListener("change", event => handleFile(event.target.files[0]));
+      ["dragenter", "dragover"].forEach(type => uploadZone.addEventListener(type, event => {
+        event.preventDefault();
+        uploadZone.classList.add("dragging");
+      }));
+      ["dragleave", "drop"].forEach(type => uploadZone.addEventListener(type, event => {
+        event.preventDefault();
+        uploadZone.classList.remove("dragging");
+      }));
+      uploadZone.addEventListener("drop", event => {
+        const file = event.dataTransfer.files[0];
+        if (file) handleFile(file);
+      });
+
+      el("planStart").addEventListener("change", syncMonthEnd);
+      el("calculateBtn").addEventListener("click", calculate);
+      el("fillZeroBtn").addEventListener("click", () => {
+        document.querySelectorAll(".pct-input").forEach(input => {
+          if (input.value === "") {
+            input.value = "0";
+            state.campaigns[Number(input.dataset.index)].missedPct = "0";
+          }
+        });
+        clearStatus(el("calcStatus"));
+      });
+      el("resetBtn").addEventListener("click", reset);
+      el("exportBtn").addEventListener("click", exportResults);
+      el("printBtn").addEventListener("click", () => window.print());
+
+      setDefaultDates();
+    })();
+  </script>
+</body>
+</html>
