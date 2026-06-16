@@ -369,7 +369,7 @@
 
     <main>
       <section class="hero">
-        <div class="eyebrow">Instacart Sponsored Products · Version 3 · Month-End ROAS</div>
+        <div class="eyebrow">Instacart Sponsored Products · Version 4 · L7 Month-End Projection</div>
         <h1>IC Missed Auction % Advisor</h1>
         <p>Upload a last-7-day campaign report, enter the missed auction percentage shown in Instacart for each active campaign, and generate Good, Better, and Best spend and attributed-sales lift estimates through month-end.</p>
       </section>
@@ -379,8 +379,8 @@
           <div class="card-head">
             <div>
               <span class="step-label">Step 1</span>
-              <h2>Set the brand, timing, and MTD totals</h2>
-              <p class="card-sub">Enter current month-to-date account totals so the advisor can project full month-end ROAS.</p>
+              <h2>Set the brand and timing</h2>
+              <p class="card-sub">The advisor projects performance from the recommendation start date through month-end using the uploaded L7 campaign pace.</p>
             </div>
           </div>
           <div class="card-body">
@@ -398,17 +398,6 @@
                 <input id="planEnd" type="date" />
               </div>
             </div>
-            <div class="field-row">
-              <div class="field">
-                <label class="field-label" for="mtdSpend">Current MTD spend</label>
-                <input id="mtdSpend" type="number" min="0" step="0.01" placeholder="Example: 12500" />
-              </div>
-              <div class="field">
-                <label class="field-label" for="mtdSales">Current MTD attributed sales</label>
-                <input id="mtdSales" type="number" min="0" step="0.01" placeholder="Example: 42000" />
-              </div>
-            </div>
-            <p class="card-sub" style="margin-top:0;">Use total Sponsored Product performance from the first day of the month through today.</p>
           </div>
         </article>
 
@@ -528,7 +517,7 @@
         <div class="summary-grid" id="summaryGrid"></div>
 
         <div class="formula-box">
-          <strong>Dynamic model:</strong> Full recoverable daily spend opportunity = L7 average daily spend × missed auction % ÷ (1 − missed auction %). Good, Better, and Best then fund the selected share of each campaign’s own remaining opportunity. Target missed auction % = current missed auction % × (1 − recovery share). Estimated sales lift = incremental spend × the campaign’s L7 ROAS. The model assumes ROAS remains consistent because the recommendation increases available budget without changing CPC bids. Projected month-end ROAS = projected month-end attributed sales ÷ projected month-end spend, including MTD actuals, expected baseline delivery, and incremental scenario lift. These are directional planning estimates, not guaranteed delivery or sales.
+          <strong>Dynamic model:</strong> Full recoverable daily spend opportunity = L7 average daily spend × missed auction % ÷ (1 − missed auction %). Good, Better, and Best then fund the selected share of each campaign’s own remaining opportunity. Target missed auction % = current missed auction % × (1 − recovery share). The baseline through-month-end projection extends each campaign’s L7 average daily spend and attributed sales across the selected remaining days. Each scenario then adds its recommended spend lift and estimates added sales using 100% of that campaign’s L7 ROAS. Projected ROAS through month-end = total projected attributed sales ÷ total projected spend for the recommendation period. These are directional planning estimates, not guaranteed delivery or sales.
         </div>
 
         <div class="table-wrap results-table">
@@ -554,7 +543,7 @@
       </section>
     </main>
 
-    <div class="footer-note">IC Missed Auction % Advisor · Version 3 · Directional planning tool for Instacart Sponsored Products · Uploaded files stay in your browser</div>
+    <div class="footer-note">IC Missed Auction % Advisor · Version 4 · Directional planning tool for Instacart Sponsored Products · Uploaded files stay in your browser</div>
   </div>
 
   <script>
@@ -824,10 +813,6 @@
         if (!brand) return "Enter the brand name.";
         if (!state.campaigns.length) return "Upload the L7 campaign report.";
         if (!el("planStart").value || !el("planEnd").value) return "Select the recommendation start and end dates.";
-        if (el("mtdSpend").value === "" || el("mtdSales").value === "") return "Enter current MTD spend and attributed sales.";
-        const mtdSpend = Number(el("mtdSpend").value);
-        const mtdSales = Number(el("mtdSales").value);
-        if (!Number.isFinite(mtdSpend) || !Number.isFinite(mtdSales) || mtdSpend < 0 || mtdSales < 0) return "MTD spend and sales must be valid non-negative numbers.";
 
         const start = parseLocalDate(el("planStart").value);
         const end = parseLocalDate(el("planEnd").value);
@@ -868,8 +853,6 @@
         const end = parseLocalDate(el("planEnd").value);
         const days = daysInclusive(start, end);
         const scenarios = getScenarios();
-        const mtdSpend = toNumber(el("mtdSpend").value);
-        const mtdSales = toNumber(el("mtdSales").value);
         state.daysRemaining = days;
 
         const results = state.campaigns.map(c => {
@@ -899,13 +882,12 @@
         });
 
         const baselineDailySpend = results.reduce((sum, row) => sum + row.avgDailySpend, 0);
-        const baselineDailySales = results.reduce((sum, row) => sum + (row.avgDailySpend * row.roas), 0);
-        const baselineRemainderSpend = baselineDailySpend * days;
-        const baselineRemainderSales = baselineDailySales * days;
-        const currentMtdRoas = mtdSpend > 0 ? mtdSales / mtdSpend : 0;
-        const baselineMonthEndSpend = mtdSpend + baselineRemainderSpend;
-        const baselineMonthEndSales = mtdSales + baselineRemainderSales;
-        const baselineMonthEndRoas = baselineMonthEndSpend > 0 ? baselineMonthEndSales / baselineMonthEndSpend : 0;
+        const baselineDailySales = results.reduce((sum, row) => sum + (row.sales / 7), 0);
+        const baselineThroughMonthEndSpend = baselineDailySpend * days;
+        const baselineThroughMonthEndSales = baselineDailySales * days;
+        const baselineThroughMonthEndRoas = baselineThroughMonthEndSpend > 0
+          ? baselineThroughMonthEndSales / baselineThroughMonthEndSpend
+          : 0;
 
         const summary = {};
         scenarios.forEach(s => {
@@ -920,18 +902,13 @@
             return acc;
           }, { dailyIncrease: 0, remainderSpendLift: 0, salesLift: 0, currentDailyBudget: 0, suggestedDailyBudget: 0 });
           summary[key].captureRate = s.captureRate;
-          summary[key].mtdSpend = mtdSpend;
-          summary[key].mtdSales = mtdSales;
-          summary[key].currentMtdRoas = currentMtdRoas;
-          summary[key].baselineRemainderSpend = baselineRemainderSpend;
-          summary[key].baselineRemainderSales = baselineRemainderSales;
-          summary[key].baselineMonthEndSpend = baselineMonthEndSpend;
-          summary[key].baselineMonthEndSales = baselineMonthEndSales;
-          summary[key].baselineMonthEndRoas = baselineMonthEndRoas;
-          summary[key].projectedMonthEndSpend = baselineMonthEndSpend + summary[key].remainderSpendLift;
-          summary[key].projectedMonthEndSales = baselineMonthEndSales + summary[key].salesLift;
-          summary[key].projectedMonthEndRoas = summary[key].projectedMonthEndSpend > 0
-            ? summary[key].projectedMonthEndSales / summary[key].projectedMonthEndSpend
+          summary[key].baselineThroughMonthEndSpend = baselineThroughMonthEndSpend;
+          summary[key].baselineThroughMonthEndSales = baselineThroughMonthEndSales;
+          summary[key].baselineThroughMonthEndRoas = baselineThroughMonthEndRoas;
+          summary[key].projectedThroughMonthEndSpend = baselineThroughMonthEndSpend + summary[key].remainderSpendLift;
+          summary[key].projectedThroughMonthEndSales = baselineThroughMonthEndSales + summary[key].salesLift;
+          summary[key].projectedThroughMonthEndRoas = summary[key].projectedThroughMonthEndSpend > 0
+            ? summary[key].projectedThroughMonthEndSales / summary[key].projectedThroughMonthEndSpend
             : 0;
         });
 
@@ -947,9 +924,8 @@
         const dateFormatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
         el("resultsTitle").textContent = `${brand} Good / Better / Best Recommendations`;
-        const currentMtdRoas = state.summary.good.currentMtdRoas;
-        const baselineMonthEndRoas = state.summary.good.baselineMonthEndRoas;
-        el("resultsSubtitle").textContent = `${state.results.length} active campaign${state.results.length === 1 ? "" : "s"} · ${state.daysRemaining} day${state.daysRemaining === 1 ? "" : "s"} from ${dateFormatter.format(start)} through ${dateFormatter.format(end)} · Current MTD ROAS ${number(currentMtdRoas, 2)}x · No-change month-end ROAS ${number(baselineMonthEndRoas, 2)}x`;
+        const baselineThroughMonthEndRoas = state.summary.good.baselineThroughMonthEndRoas;
+        el("resultsSubtitle").textContent = `${state.results.length} active campaign${state.results.length === 1 ? "" : "s"} · ${state.daysRemaining} day${state.daysRemaining === 1 ? "" : "s"} from ${dateFormatter.format(start)} through ${dateFormatter.format(end)} · L7 pace projected ROAS ${number(baselineThroughMonthEndRoas, 2)}x`;
 
         const cards = [
           { key: "good", label: "Good", className: "good" },
@@ -972,9 +948,9 @@
                 <div class="metric-line"><span>Suggested total daily budgets</span><strong>${currency(s.suggestedDailyBudget, 0)}/day</strong></div>
                 <div class="metric-line"><span>Remainder-of-month spend lift</span><strong class="positive">+${currency(s.remainderSpendLift, 0)}</strong></div>
                 <div class="metric-line"><span>Estimated attributed sales lift</span><strong class="positive">+${currency(s.salesLift, 0)}</strong></div>
-                <div class="metric-line"><span>Projected month-end spend</span><strong>${currency(s.projectedMonthEndSpend, 0)}</strong></div>
-                <div class="metric-line"><span>Projected month-end sales</span><strong>${currency(s.projectedMonthEndSales, 0)}</strong></div>
-                <div class="metric-line"><span>Projected month-end ROAS</span><strong class="positive">${number(s.projectedMonthEndRoas, 2)}x</strong></div>
+                <div class="metric-line"><span>Projected spend through month-end</span><strong>${currency(s.projectedThroughMonthEndSpend, 0)}</strong></div>
+                <div class="metric-line"><span>Projected sales through month-end</span><strong>${currency(s.projectedThroughMonthEndSales, 0)}</strong></div>
+                <div class="metric-line"><span>Projected ROAS through month-end</span><strong class="positive">${number(s.projectedThroughMonthEndRoas, 2)}x</strong></div>
               </div>
             </article>
           `;
@@ -1014,8 +990,8 @@
           "Better Target Missed Auction %", "Better Daily Spend Increase", "Better Suggested Daily Budget", "Better Remainder Spend Lift", "Better Estimated Sales Lift",
           "Best Target Missed Auction %", "Best Daily Spend Increase", "Best Suggested Daily Budget", "Best Remainder Spend Lift", "Best Estimated Sales Lift",
           "Recommendation Start", "Recommendation End", "Days Remaining",
-          "Current MTD Spend", "Current MTD Attributed Sales", "Current MTD ROAS",
-          "Projected Month-End Spend", "Projected Month-End Attributed Sales", "Projected Month-End ROAS"
+          "L7-Pace Baseline Spend Through Month-End", "L7-Pace Baseline Sales Through Month-End", "L7-Pace Baseline ROAS",
+          "Projected Spend Through Month-End", "Projected Attributed Sales Through Month-End", "Projected ROAS Through Month-End"
         ]];
 
         state.results.forEach(row => {
@@ -1028,7 +1004,7 @@
             (b.targetMissedRate * 100).toFixed(1), b.dailyIncrease.toFixed(2), b.suggestedDailyBudget.toFixed(2), b.remainderSpendLift.toFixed(2), b.salesLift.toFixed(2),
             (best.targetMissedRate * 100).toFixed(1), best.dailyIncrease.toFixed(2), best.suggestedDailyBudget.toFixed(2), best.remainderSpendLift.toFixed(2), best.salesLift.toFixed(2),
             el("planStart").value, el("planEnd").value, state.daysRemaining,
-            state.summary.good.mtdSpend.toFixed(2), state.summary.good.mtdSales.toFixed(2), state.summary.good.currentMtdRoas.toFixed(4),
+            state.summary.good.baselineThroughMonthEndSpend.toFixed(2), state.summary.good.baselineThroughMonthEndSales.toFixed(2), state.summary.good.baselineThroughMonthEndRoas.toFixed(4),
             "", "", ""
           ]);
         });
@@ -1042,8 +1018,8 @@
             "", key === "better" ? s.dailyIncrease.toFixed(2) : "", key === "better" ? s.suggestedDailyBudget.toFixed(2) : "", key === "better" ? s.remainderSpendLift.toFixed(2) : "", key === "better" ? s.salesLift.toFixed(2) : "",
             "", key === "best" ? s.dailyIncrease.toFixed(2) : "", key === "best" ? s.suggestedDailyBudget.toFixed(2) : "", key === "best" ? s.remainderSpendLift.toFixed(2) : "", key === "best" ? s.salesLift.toFixed(2) : "",
             el("planStart").value, el("planEnd").value, state.daysRemaining,
-            s.mtdSpend.toFixed(2), s.mtdSales.toFixed(2), s.currentMtdRoas.toFixed(4),
-            s.projectedMonthEndSpend.toFixed(2), s.projectedMonthEndSales.toFixed(2), s.projectedMonthEndRoas.toFixed(4)
+            s.baselineThroughMonthEndSpend.toFixed(2), s.baselineThroughMonthEndSales.toFixed(2), s.baselineThroughMonthEndRoas.toFixed(4),
+            s.projectedThroughMonthEndSpend.toFixed(2), s.projectedThroughMonthEndSales.toFixed(2), s.projectedThroughMonthEndRoas.toFixed(4)
           ]);
         });
 
@@ -1067,8 +1043,6 @@
         state.daysRemaining = 0;
         fileInput.value = "";
         el("brandName").value = "";
-        el("mtdSpend").value = "";
-        el("mtdSales").value = "";
         el("filePill").style.display = "none";
         clearStatus(el("uploadStatus"));
         clearStatus(el("calcStatus"));
