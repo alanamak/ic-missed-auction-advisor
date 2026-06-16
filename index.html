@@ -369,7 +369,7 @@
 
     <main>
       <section class="hero">
-        <div class="eyebrow">Instacart Sponsored Products</div>
+        <div class="eyebrow">Instacart Sponsored Products · Version 3 · Month-End ROAS</div>
         <h1>IC Missed Auction % Advisor</h1>
         <p>Upload a last-7-day campaign report, enter the missed auction percentage shown in Instacart for each active campaign, and generate Good, Better, and Best spend and attributed-sales lift estimates through month-end.</p>
       </section>
@@ -379,8 +379,8 @@
           <div class="card-head">
             <div>
               <span class="step-label">Step 1</span>
-              <h2>Set the brand and timing</h2>
-              <p class="card-sub">The plan begins tomorrow by default and runs through the final day of that month.</p>
+              <h2>Set the brand, timing, and MTD totals</h2>
+              <p class="card-sub">Enter current month-to-date account totals so the advisor can project full month-end ROAS.</p>
             </div>
           </div>
           <div class="card-body">
@@ -398,6 +398,17 @@
                 <input id="planEnd" type="date" />
               </div>
             </div>
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="mtdSpend">Current MTD spend</label>
+                <input id="mtdSpend" type="number" min="0" step="0.01" placeholder="Example: 12500" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="mtdSales">Current MTD attributed sales</label>
+                <input id="mtdSales" type="number" min="0" step="0.01" placeholder="Example: 42000" />
+              </div>
+            </div>
+            <p class="card-sub" style="margin-top:0;">Use total Sponsored Product performance from the first day of the month through today.</p>
           </div>
         </article>
 
@@ -434,7 +445,7 @@
         <div class="card-body info-list">
           <div class="info-item"><span class="info-number">1</span><div><strong>Uses actual L7 performance</strong><span>Average daily spend and ROAS come from the uploaded report, limited to active campaigns.</span></div></div>
           <div class="info-item"><span class="info-number">2</span><div><strong>Sizes the missed-auction opportunity</strong><span>The model estimates how much incremental spend would be needed to recover a selected share of auctions currently missed.</span></div></div>
-          <div class="info-item"><span class="info-number">3</span><div><strong>Projects through month-end</strong><span>Incremental daily spend is multiplied by remaining days, then by an adjusted L7 ROAS to estimate attributed sales lift.</span></div></div>
+          <div class="info-item"><span class="info-number">3</span><div><strong>Projects spend, sales, and ROAS through month-end</strong><span>The model combines current MTD totals, expected baseline delivery for the remaining days, and the incremental Good, Better, or Best opportunity.</span></div></div>
         </div>
       </section>
 
@@ -469,27 +480,24 @@
           <details>
             <summary>Advanced assumptions</summary>
             <div class="details-body">
-              <p class="card-sub" style="margin-top:0; margin-bottom:14px;">“Auction recovery” is applied dynamically to each campaign’s missed-auction opportunity, not as a fixed spend increase. For example, at 40% missed auctions, the default Good scenario funds 25% of that missed opportunity, Better funds 50%, and Best funds 75%. “ROAS retained” makes higher-spend scenarios more conservative as efficiency may soften while scaling.</p>
+              <p class="card-sub" style="margin-top:0; margin-bottom:14px;">“Auction recovery” is applied dynamically to each campaign’s missed-auction opportunity, not as a fixed spend increase. For example, at 40% missed auctions, Good funds 25% of that missed opportunity, Better funds 50%, and Best funds 75%. Because the recommendation adds budget without increasing CPC bids, Good, Better, and Best all use 100% of the campaign’s L7 ROAS to estimate attributed sales lift.</p>
               <div class="assumption-grid">
                 <div class="assumption-box">
                   <h3>Good</h3>
                   <div class="mini-row">
                     <label>Auction recovery %<input id="goodCapture" type="number" min="0" max="100" step="1" value="25" /></label>
-                    <label>ROAS retained %<input id="goodRetention" type="number" min="0" max="150" step="1" value="100" /></label>
                   </div>
                 </div>
                 <div class="assumption-box">
                   <h3>Better</h3>
                   <div class="mini-row">
                     <label>Auction recovery %<input id="betterCapture" type="number" min="0" max="100" step="1" value="50" /></label>
-                    <label>ROAS retained %<input id="betterRetention" type="number" min="0" max="150" step="1" value="90" /></label>
                   </div>
                 </div>
                 <div class="assumption-box">
                   <h3>Best</h3>
                   <div class="mini-row">
                     <label>Auction recovery %<input id="bestCapture" type="number" min="0" max="100" step="1" value="75" /></label>
-                    <label>ROAS retained %<input id="bestRetention" type="number" min="0" max="150" step="1" value="80" /></label>
                   </div>
                 </div>
               </div>
@@ -520,7 +528,7 @@
         <div class="summary-grid" id="summaryGrid"></div>
 
         <div class="formula-box">
-          <strong>Dynamic model:</strong> Full recoverable daily spend opportunity = L7 average daily spend × missed auction % ÷ (1 − missed auction %). Good, Better, and Best then fund the selected share of each campaign’s own remaining opportunity. Target missed auction % = current missed auction % × (1 − recovery share). Estimated sales lift = incremental spend × L7 ROAS × scenario ROAS retention. These are directional planning estimates, not guaranteed delivery or sales.
+          <strong>Dynamic model:</strong> Full recoverable daily spend opportunity = L7 average daily spend × missed auction % ÷ (1 − missed auction %). Good, Better, and Best then fund the selected share of each campaign’s own remaining opportunity. Target missed auction % = current missed auction % × (1 − recovery share). Estimated sales lift = incremental spend × the campaign’s L7 ROAS. The model assumes ROAS remains consistent because the recommendation increases available budget without changing CPC bids. Projected month-end ROAS = projected month-end attributed sales ÷ projected month-end spend, including MTD actuals, expected baseline delivery, and incremental scenario lift. These are directional planning estimates, not guaranteed delivery or sales.
         </div>
 
         <div class="table-wrap results-table">
@@ -546,7 +554,7 @@
       </section>
     </main>
 
-    <div class="footer-note">IC Missed Auction % Advisor · Directional planning tool for Instacart Sponsored Products · Uploaded files stay in your browser</div>
+    <div class="footer-note">IC Missed Auction % Advisor · Version 3 · Directional planning tool for Instacart Sponsored Products · Uploaded files stay in your browser</div>
   </div>
 
   <script>
@@ -800,15 +808,14 @@
       }
 
       function getScenarios() {
-        const scenario = (name, captureId, retentionId) => ({
+        const scenario = (name, captureId) => ({
           name,
-          captureRate: toNumber(el(captureId).value) / 100,
-          retentionRate: toNumber(el(retentionId).value) / 100
+          captureRate: toNumber(el(captureId).value) / 100
         });
         return [
-          scenario("Good", "goodCapture", "goodRetention"),
-          scenario("Better", "betterCapture", "betterRetention"),
-          scenario("Best", "bestCapture", "bestRetention")
+          scenario("Good", "goodCapture"),
+          scenario("Better", "betterCapture"),
+          scenario("Best", "bestCapture")
         ];
       }
 
@@ -817,6 +824,10 @@
         if (!brand) return "Enter the brand name.";
         if (!state.campaigns.length) return "Upload the L7 campaign report.";
         if (!el("planStart").value || !el("planEnd").value) return "Select the recommendation start and end dates.";
+        if (el("mtdSpend").value === "" || el("mtdSales").value === "") return "Enter current MTD spend and attributed sales.";
+        const mtdSpend = Number(el("mtdSpend").value);
+        const mtdSales = Number(el("mtdSales").value);
+        if (!Number.isFinite(mtdSpend) || !Number.isFinite(mtdSales) || mtdSpend < 0 || mtdSales < 0) return "MTD spend and sales must be valid non-negative numbers.";
 
         const start = parseLocalDate(el("planStart").value);
         const end = parseLocalDate(el("planEnd").value);
@@ -832,8 +843,8 @@
         if (invalid.length) return "Missed auction percentages must be from 0% through 99.9%.";
 
         const scenarios = getScenarios();
-        const invalidScenario = scenarios.some(s => s.captureRate < 0 || s.captureRate > 1 || s.retentionRate < 0 || s.retentionRate > 1.5);
-        if (invalidScenario) return "Scenario auction recovery must be 0%–100%, and ROAS retention must be 0%–150%.";
+        const invalidScenario = scenarios.some(s => s.captureRate < 0 || s.captureRate > 1);
+        if (invalidScenario) return "Scenario auction recovery must be 0%–100%.";
 
         return "";
       }
@@ -857,6 +868,8 @@
         const end = parseLocalDate(el("planEnd").value);
         const days = daysInclusive(start, end);
         const scenarios = getScenarios();
+        const mtdSpend = toNumber(el("mtdSpend").value);
+        const mtdSales = toNumber(el("mtdSales").value);
         state.daysRemaining = days;
 
         const results = state.campaigns.map(c => {
@@ -869,17 +882,14 @@
           scenarios.forEach(s => {
             const dailyIncrease = fullDailyOpportunity * s.captureRate;
             const remainderSpendLift = dailyIncrease * days;
-            const adjustedRoas = c.roas * s.retentionRate;
-            const salesLift = remainderSpendLift * adjustedRoas;
+            const salesLift = remainderSpendLift * c.roas;
             const suggestedDailyBudget = (c.currentDailyBudget > 0 ? c.currentDailyBudget : c.avgDailySpend) + dailyIncrease;
             const targetMissedRate = missedRate * (1 - s.captureRate);
             scenarioResults[s.name.toLowerCase()] = {
               captureRate: s.captureRate,
-              retentionRate: s.retentionRate,
               targetMissedRate,
               dailyIncrease,
               remainderSpendLift,
-              adjustedRoas,
               salesLift,
               suggestedDailyBudget
             };
@@ -887,6 +897,15 @@
 
           return { ...c, missedRate, fullDailyOpportunity, scenarios: scenarioResults };
         });
+
+        const baselineDailySpend = results.reduce((sum, row) => sum + row.avgDailySpend, 0);
+        const baselineDailySales = results.reduce((sum, row) => sum + (row.avgDailySpend * row.roas), 0);
+        const baselineRemainderSpend = baselineDailySpend * days;
+        const baselineRemainderSales = baselineDailySales * days;
+        const currentMtdRoas = mtdSpend > 0 ? mtdSales / mtdSpend : 0;
+        const baselineMonthEndSpend = mtdSpend + baselineRemainderSpend;
+        const baselineMonthEndSales = mtdSales + baselineRemainderSales;
+        const baselineMonthEndRoas = baselineMonthEndSpend > 0 ? baselineMonthEndSales / baselineMonthEndSpend : 0;
 
         const summary = {};
         scenarios.forEach(s => {
@@ -901,7 +920,19 @@
             return acc;
           }, { dailyIncrease: 0, remainderSpendLift: 0, salesLift: 0, currentDailyBudget: 0, suggestedDailyBudget: 0 });
           summary[key].captureRate = s.captureRate;
-          summary[key].retentionRate = s.retentionRate;
+          summary[key].mtdSpend = mtdSpend;
+          summary[key].mtdSales = mtdSales;
+          summary[key].currentMtdRoas = currentMtdRoas;
+          summary[key].baselineRemainderSpend = baselineRemainderSpend;
+          summary[key].baselineRemainderSales = baselineRemainderSales;
+          summary[key].baselineMonthEndSpend = baselineMonthEndSpend;
+          summary[key].baselineMonthEndSales = baselineMonthEndSales;
+          summary[key].baselineMonthEndRoas = baselineMonthEndRoas;
+          summary[key].projectedMonthEndSpend = baselineMonthEndSpend + summary[key].remainderSpendLift;
+          summary[key].projectedMonthEndSales = baselineMonthEndSales + summary[key].salesLift;
+          summary[key].projectedMonthEndRoas = summary[key].projectedMonthEndSpend > 0
+            ? summary[key].projectedMonthEndSales / summary[key].projectedMonthEndSpend
+            : 0;
         });
 
         state.results = results;
@@ -916,7 +947,9 @@
         const dateFormatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
         el("resultsTitle").textContent = `${brand} Good / Better / Best Recommendations`;
-        el("resultsSubtitle").textContent = `${state.results.length} active campaign${state.results.length === 1 ? "" : "s"} · ${state.daysRemaining} day${state.daysRemaining === 1 ? "" : "s"} from ${dateFormatter.format(start)} through ${dateFormatter.format(end)}`;
+        const currentMtdRoas = state.summary.good.currentMtdRoas;
+        const baselineMonthEndRoas = state.summary.good.baselineMonthEndRoas;
+        el("resultsSubtitle").textContent = `${state.results.length} active campaign${state.results.length === 1 ? "" : "s"} · ${state.daysRemaining} day${state.daysRemaining === 1 ? "" : "s"} from ${dateFormatter.format(start)} through ${dateFormatter.format(end)} · Current MTD ROAS ${number(currentMtdRoas, 2)}x · No-change month-end ROAS ${number(baselineMonthEndRoas, 2)}x`;
 
         const cards = [
           { key: "good", label: "Good", className: "good" },
@@ -930,7 +963,7 @@
             <article class="scenario-card ${card.className}">
               <div class="scenario-name">
                 <h3>${card.label}</h3>
-                <span>${number(s.captureRate * 100, 0)}% auction recovery · ${number(s.retentionRate * 100, 0)}% ROAS retained</span>
+                <span>${number(s.captureRate * 100, 0)}% auction recovery · Uses full L7 ROAS</span>
               </div>
               <div class="big-number">+${currency(s.dailyIncrease, 0)}/day</div>
               <div class="big-caption">Total incremental daily spend needed</div>
@@ -939,6 +972,9 @@
                 <div class="metric-line"><span>Suggested total daily budgets</span><strong>${currency(s.suggestedDailyBudget, 0)}/day</strong></div>
                 <div class="metric-line"><span>Remainder-of-month spend lift</span><strong class="positive">+${currency(s.remainderSpendLift, 0)}</strong></div>
                 <div class="metric-line"><span>Estimated attributed sales lift</span><strong class="positive">+${currency(s.salesLift, 0)}</strong></div>
+                <div class="metric-line"><span>Projected month-end spend</span><strong>${currency(s.projectedMonthEndSpend, 0)}</strong></div>
+                <div class="metric-line"><span>Projected month-end sales</span><strong>${currency(s.projectedMonthEndSales, 0)}</strong></div>
+                <div class="metric-line"><span>Projected month-end ROAS</span><strong class="positive">${number(s.projectedMonthEndRoas, 2)}x</strong></div>
               </div>
             </article>
           `;
@@ -977,7 +1013,9 @@
           "Good Target Missed Auction %", "Good Daily Spend Increase", "Good Suggested Daily Budget", "Good Remainder Spend Lift", "Good Estimated Sales Lift",
           "Better Target Missed Auction %", "Better Daily Spend Increase", "Better Suggested Daily Budget", "Better Remainder Spend Lift", "Better Estimated Sales Lift",
           "Best Target Missed Auction %", "Best Daily Spend Increase", "Best Suggested Daily Budget", "Best Remainder Spend Lift", "Best Estimated Sales Lift",
-          "Recommendation Start", "Recommendation End", "Days Remaining"
+          "Recommendation Start", "Recommendation End", "Days Remaining",
+          "Current MTD Spend", "Current MTD Attributed Sales", "Current MTD ROAS",
+          "Projected Month-End Spend", "Projected Month-End Attributed Sales", "Projected Month-End ROAS"
         ]];
 
         state.results.forEach(row => {
@@ -989,7 +1027,9 @@
             (g.targetMissedRate * 100).toFixed(1), g.dailyIncrease.toFixed(2), g.suggestedDailyBudget.toFixed(2), g.remainderSpendLift.toFixed(2), g.salesLift.toFixed(2),
             (b.targetMissedRate * 100).toFixed(1), b.dailyIncrease.toFixed(2), b.suggestedDailyBudget.toFixed(2), b.remainderSpendLift.toFixed(2), b.salesLift.toFixed(2),
             (best.targetMissedRate * 100).toFixed(1), best.dailyIncrease.toFixed(2), best.suggestedDailyBudget.toFixed(2), best.remainderSpendLift.toFixed(2), best.salesLift.toFixed(2),
-            el("planStart").value, el("planEnd").value, state.daysRemaining
+            el("planStart").value, el("planEnd").value, state.daysRemaining,
+            state.summary.good.mtdSpend.toFixed(2), state.summary.good.mtdSales.toFixed(2), state.summary.good.currentMtdRoas.toFixed(4),
+            "", "", ""
           ]);
         });
 
@@ -1001,7 +1041,9 @@
             "", key === "good" ? s.dailyIncrease.toFixed(2) : "", key === "good" ? s.suggestedDailyBudget.toFixed(2) : "", key === "good" ? s.remainderSpendLift.toFixed(2) : "", key === "good" ? s.salesLift.toFixed(2) : "",
             "", key === "better" ? s.dailyIncrease.toFixed(2) : "", key === "better" ? s.suggestedDailyBudget.toFixed(2) : "", key === "better" ? s.remainderSpendLift.toFixed(2) : "", key === "better" ? s.salesLift.toFixed(2) : "",
             "", key === "best" ? s.dailyIncrease.toFixed(2) : "", key === "best" ? s.suggestedDailyBudget.toFixed(2) : "", key === "best" ? s.remainderSpendLift.toFixed(2) : "", key === "best" ? s.salesLift.toFixed(2) : "",
-            el("planStart").value, el("planEnd").value, state.daysRemaining
+            el("planStart").value, el("planEnd").value, state.daysRemaining,
+            s.mtdSpend.toFixed(2), s.mtdSales.toFixed(2), s.currentMtdRoas.toFixed(4),
+            s.projectedMonthEndSpend.toFixed(2), s.projectedMonthEndSales.toFixed(2), s.projectedMonthEndRoas.toFixed(4)
           ]);
         });
 
@@ -1025,6 +1067,8 @@
         state.daysRemaining = 0;
         fileInput.value = "";
         el("brandName").value = "";
+        el("mtdSpend").value = "";
+        el("mtdSales").value = "";
         el("filePill").style.display = "none";
         clearStatus(el("uploadStatus"));
         clearStatus(el("calcStatus"));
